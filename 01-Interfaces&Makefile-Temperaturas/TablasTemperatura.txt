@@ -1,0 +1,35 @@
+Tabla de fahrenheit a celsius 
+Fahrenheit: 0.00 Celsius: -17.78
+Fahrenheit: 20.00 Celsius:  -6.67
+Fahrenheit: 40.00 Celsius:   4.44
+Fahrenheit: 60.00 Celsius:  15.56
+Fahrenheit: 80.00 Celsius:  26.67
+Fahrenheit: 100.00 Celsius:  37.78
+Fahrenheit: 120.00 Celsius:  48.89
+Fahrenheit: 140.00 Celsius:  60.00
+Fahrenheit: 160.00 Celsius:  71.11
+Fahrenheit: 180.00 Celsius:  82.22
+Fahrenheit: 200.00 Celsius:  93.33
+Fahrenheit: 220.00 Celsius: 104.44
+Fahrenheit: 240.00 Celsius: 115.56
+Fahrenheit: 260.00 Celsius: 126.67
+Fahrenheit: 280.00 Celsius: 137.78
+Fahrenheit: 300.00 Celsius: 148.89
+
+Tabla de celsius a fahrenheit 
+Celsius: 0.00  Fahrenheit:  32.00
+Celsius: 20.00  Fahrenheit:  68.00
+Celsius: 40.00  Fahrenheit: 104.00
+Celsius: 60.00  Fahrenheit: 140.00
+Celsius: 80.00  Fahrenheit: 176.00
+Celsius: 100.00  Fahrenheit: 212.00
+Celsius: 120.00  Fahrenheit: 248.00
+Celsius: 140.00  Fahrenheit: 284.00
+Celsius: 160.00  Fahrenheit: 320.00
+Celsius: 180.00  Fahrenheit: 356.00
+Celsius: 200.00  Fahrenheit: 392.00
+Celsius: 220.00  Fahrenheit: 428.00
+Celsius: 240.00  Fahrenheit: 464.00
+Celsius: 260.00  Fahrenheit: 500.00
+Celsius: 280.00  Fahrenheit: 536.00
+Celsius: 300.00  Fahrenheit: 572.00
