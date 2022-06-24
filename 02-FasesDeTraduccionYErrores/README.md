@@ -252,6 +252,124 @@ Contenido de **"hello7.c"**:
 	hello7.c:3:5: warning: incompatible implicit declaration of built-in function 'printf'
 	hello7.c:3:5: note: include '<stdio.h>' or provide a declaration of 'printf'
 
-> El programa se ejecuta y funciona porque por default gcc tiene a libc en sus programas. Pero no se deberian ignorar los errores del compilador, para que sea correcta la solucion habria que incluir a stdio.h
+> El programa se ejecuta y funciona porque por default gcc tiene a libc en sus programas, otros compiladores no lo tienen y el programa no compila. Pero no se deberian ignorar los errores del compilador, para que sea correcta la solucion habria que incluir a stdio.h. No cumple con el estandar de C de no permitir la declaracion implicita.
 
+## 6. Compilación Separada: Contratos y Módulos
 
+#### a. Escribir studio1.c (sí, studio1, no stdio) y hello8.c.
+
+La unidad de traducción studio1.c tiene una implementación de la función prontf, que es solo un wrappwer1 de la función estándar printf:
+  ~~~
+  void prontf(const char* s, int i){
+    printf("La respuesta es %d\n", i);
+  }
+  ~~~
+
+La unidad de traducción hello8.c, muy similar a hello4.c, invoca a prontf, pero no incluye ningún header.
+  ~~~
+  int main(void){
+  int i=42;
+  prontf("La respuesta es %d\n", i);
+  }
+  ~~~
+
+#### b. Investigar como en su entorno de desarrollo puede generar un programa ejecutable que se base en las dos unidades de traducción       (i.e, archivos fuente, archivos con extensión .c). Luego generar ese ejecutable y probarlo.
+
+ Mi entorno de desarrolo es VSCode, así que siempre compilo usando la terminal, y para compilar mas de un archivo .c simplemente hay que escribir ambos archivos en el comando para que el compilador los use como fuentes. El comando quedaría "gcc hello8.c studio1.c -std=c18 -o hello8.ex".  
+  Como el main no tiene disponible el prototipo de la función "prontf", y "prontf" tampoco tiene el prototipo de "printf", se crea el ejecutable pero surgen los siguientes warnings:
+  ~~~
+  hello8.c: In function ‘main’:
+  hello8.c:3:2: warning: implicit declaration of function ‘prontf’ [-Wimplicit-function-declaration]
+      3 |  prontf("La respuesta es %d\n", i);
+        |  ^~~~~~
+  studio1.c: In function ‘prontf’:
+  studio1.c:2:3: warning: implicit declaration of function ‘printf’ [-Wimplicit-function-declaration]
+      2 |   printf("La respuesta es %d\n", i);
+        |   ^~~~~~
+  studio1.c:2:3: warning: incompatible implicit declaration of built-in function ‘printf’
+  studio1.c:1:1: note: include ‘<stdio.h>’ or provide a declaration of ‘printf’
+    +++ |+#include <stdio.h>
+      1 | void prontf(const char* s, int i){
+  ~~~
+  El ejecutable funciona correctamente.  
+
+#### c. Responder ¿qué ocurre si eliminamos o agregamos argumentos a la invocación de prontf? Justifique.
+
+Si eliminamos o agregamos argumentos a la invocación no cambia nada, al finalizar todos los pasos surgen los mismos warnings detallados en el punto b). Esto se debe a que al no tener disponibles los prototipos de las funciones, es decir, sus contratos, a la hora de hacer todos los pasos para crear el ejecutable no se tiene información de cúales serían los argumentos que debería recibir la función "prontf" y que tipo de dato debería retornar. Por lo tanto no hay errores y solo muestra los mismos warnings.  
+Particularmente si agregamos argumentos, simplemente en la ejecución se va a imprimir el printf con el texto "La respuesta es: " y luego el segundo parametro que le pasemos a la funcion prontf, si es un entero definido como "i", imprime 42, si es una cadena de texto imprime un numero raro que es lo que interpretó de dicha cadena.  
+En el caso de que le saquemos argumentos va a ocurrir algo que paso en un punto anterior, como no recibe un segundo argumento prontf, printf interpreta lo que hay en un espacio de memoria del tamaño de un int y lo pone en lugar del %d.  
+
+#### d. Revisitar el punto anterior, esta vez utilizando un contrato de interfaz en un archivo header.
+
+* Escribir el contrato en studio.h.
+    ~~~
+    #ifndef _STUDIO_H_INCULDED_
+    #define _STUDIO_H_INCULDED_
+    void prontf(const char*, int);
+    #endif    
+    ~~~
+* Escribir hello9.c, un cliente que sí incluye el contrato.
+    ~~~
+    #include "studio.h" // Interfaz que importa
+    int main(void){
+    int i=42;
+    prontf("La respuesta es %d\n", i);
+    }   
+    ~~~
+* Escribir studio2.c, el proveedor que sí incluye el contrato.
+    ~~~
+    #include "studio.h" // Interfaz que exporta
+    #include <stdio.h> // Interfaz que importa
+    void prontf(const char* s, int i){
+    printf("La respuesta es %d\n", i);
+    }
+    ~~~
+
+* Responder: ¿Qué ventaja da incluir el contrato en los clientes y en el proveedor.  
+      
+    La ventaja que da incluir el contrato en los clientes y en el proveedor es que ayuda al programador a asegurarse de que invocó las funciones de la manera que fueron diseñadas. Corrobora en tiempo de compilación que las funciones fueron invocadas de la manera correcta, es decir, que reciban como argumentos la cantidad que el prototipo indica, de esta manera no habrá invocaciones ambiguas, sino bien especificadas. 
+    Sorpresivamente solo arroja un warning y no un error cuando la función espera un tipo de dato y en la invocación se le asigna otro.  
+
+    Por ejemplo si quiero agregar argumentos de más que no estén contemplados en el prototipo, el compilador me arroja el siguiente error:  
+    ~~~
+    hello9.c: In function ‘main’:
+    hello9.c:4:2: error: too many arguments to function ‘prontf’
+        4 |  prontf("La respuesta es %d\n", i,i);
+          |  ^~~~~~
+    In file included from hello9.c:1:
+    studio.h:3:6: note: declared here
+        3 | void prontf(const char*, int);
+          |      ^~~~~~
+    ~~~  
+    Pero si la función es invocada con la cantidad correcta de argumentos pero el tipo de dato no coincide con el prototipo (en este caso, en vez de invocar prontf con la variable "i", la invoqué con una cadena de caracteres) arroja el siguiente warning:
+    ~~~
+    hello9.c: In function ‘main’:
+    hello9.c:4:33: warning: passing argument 2 of ‘prontf’ makes integer from pointer without a cast [-Wint-conversion]
+        4 |  prontf("La respuesta es %d\n", "estoEsUnTexto");
+          |                                 ^~~~~~~~~~~~~~~
+          |                                 |
+          |                                 char *
+    In file included from hello9.c:1:
+    studio.h:3:26: note: expected ‘int’ but argument is of type ‘char *’
+        3 | void prontf(const char*, int);
+          |                          ^~~
+    ~~~  
+    Al probar el ejecutable, funciona pero imprime un valor raro, que es lo que interpreta como un int de un espacio de memoria al cual no le fue asignado un valor entero: 
+    ~~~
+    La respuesta es -370335740
+    ~~~  
+
+###  Punto Extra  
+  a) Investigue sobre bibliotecas. ¿Qué son? ¿Se puden distribuir? ¿Son portables? ¿Cuáles son sus ventajas y desventajas?  
+    
+  Las bibliotecas son colecciones de archivos de código objeto, resultantes de la compilación de código de implementaciones funcionales en un determinado lenguaje de programación. Las bilbiotecas ayudan con funcionalidades al programador, ya que puede reutilizar lo que se haya desarrollado en las mismas.  
+  Las bibilotecas al ser código objeto, están compiladas para la arquitectura en donde fueron compiladas justamente. Una arquitectura diferente no entendería el código objeto, por lo tanto no son portables. La única manera sería que ambas computadoras tuvieran la misma arquitectura.  
+  **Ventajas:**  
+  * Ayudan a mantener prolijo y entendible el código al abstraer funcionalidades que utiliza el programador.
+  * Ayuda a la reutilización de código, ahorrandole tiempo y trabajo al programador.
+  * Suponen tener todas las funcionalidades bien testeadas.
+  * El creador de la biblioteca solo comparte el código objeto, así que puede ocultar la implementación en el lenguaje de programación que utilice
+    
+  **Desventajas:**
+  * El usuario de una biblioteca no puede ver las implementaciones de las funciones, solo sus contratos.
+  * No son portables
